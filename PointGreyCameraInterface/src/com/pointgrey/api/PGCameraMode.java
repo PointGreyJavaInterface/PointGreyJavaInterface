@@ -31,6 +31,6 @@ public class PGCameraMode {
         
         @Override
         public String toString(){
-            return "Video Mode: " + videoMode + " FrameRate Mode: " + frameRateMode + " Resoltuion (" + videoMode.getWidth() + ", " + videoMode.getHeight() + ")";
+            return "Video Mode: " + videoMode + " FrameRate Mode: " + frameRateMode + " Resolution (" + videoMode.getWidth() + ", " + videoMode.getHeight() + ")";
         }
 }

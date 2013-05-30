@@ -55,4 +55,17 @@ public class PGCameraFeatureControl {
     public float getMinimum(){
         return (int)Math.ceil(minVal);
     }
+    
+    public float getCurrentValue(){
+        PGProperty prop = PointGreyCameraInterface.getProperty(type);
+        if(info.absValSupported){
+            return prop.absValue;
+        } else {
+            return prop.valueA;
+        }
+    }
+    
+    public boolean isFeaturePresent(){
+        return info.present;
+    }
 }
