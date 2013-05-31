@@ -111,8 +111,7 @@ void PrintCameraInfo() {
         camInfo.firmwareBuildTime);
 }
 
-JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getSupportedModes
-  (JNIEnv *env, jobject thisClass){
+JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getSupportedModes(JNIEnv *env, jobject thisClass){
 	fc2VideoMode testMode;
 	fc2FrameRate testFramerate;
 	int i;
@@ -124,6 +123,8 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 	jintArray retJava;
 	jint* bufferPtr;
 	BOOL isSupported;
+	int error;
+	char exBuffer[128];
 
 	retSupported = (int*)malloc(sizeof(int)*supportedModes * supportedFramerates);
 
@@ -131,7 +132,14 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 		for(j = 0; j < supportedFramerates; j++){
 			testMode = (fc2VideoMode)VideoModes[i];
 			testFramerate = (fc2FrameRate)FramerateModes[j];
-			fc2GetVideoModeAndFrameRateInfo(context, testMode, testFramerate, &isSupported);
+			error = fc2GetVideoModeAndFrameRateInfo(context, testMode, testFramerate, &isSupported);
+
+			if(error != FC2_ERROR_OK){
+				sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetVideoModeAndFrameRateInfo returned error", getError(error));
+				(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+				return NULL;
+			}
+
 			if(isSupported){
 				retSupported[retSupportedIndex] = i;
 				retSupported[retSupportedIndex + 1] = j;
@@ -156,11 +164,18 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 	return retJava;
 }
 
-JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_setCameraMode
-  (JNIEnv *env, jclass thisClass, jint vidMode, jint frameMode){
-	  fc2StopCapture(context);
-	  fc2SetVideoModeAndFrameRate(context, (fc2VideoMode)vidMode, (fc2FrameRate)frameMode);
-	  fc2StartCapture(context);
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_setCameraMode(JNIEnv *env, jclass thisClass, jint vidMode, jint frameMode){
+	char exBuffer[128];
+	int error;
+
+	fc2StopCapture(context); // if camera is currently capturing it should be stopped.
+
+	error = fc2SetVideoModeAndFrameRate(context, (fc2VideoMode)vidMode, (fc2FrameRate)frameMode);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2SetVideoModeAndFrameRate returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 }
  
 void SetTimeStamping(BOOL enableTimeStamp) {
@@ -175,21 +190,29 @@ void SetTimeStamping(BOOL enableTimeStamp) {
     fc2SetEmbeddedImageInfo(context, &embeddedInfo);
 }
 
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_createContext(JNIEnv *env, jclass thisClass){
-	jint error = (jint)fc2CreateContext(&context);
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_createContext(JNIEnv *env, jclass thisClass){
+	int error = fc2CreateContext(&context);
+	char exBuffer[128];
 
-	return error;
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2CreateContext returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+	}
 }
 
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_destroyContext(JNIEnv *env, jclass thisClass){
-	jint error = (jint)fc2DestroyContext(context);
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_destroyContext(JNIEnv *env, jclass thisClass){
+	int error = fc2DestroyContext(context);
+	char exBuffer[128];
 
-	return error;
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2DestroyContext returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+	}
 }
 
 JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getNumOfCameras(JNIEnv *env, jclass thisClass){
 	unsigned int numOfCameras;
-	jint error = (jint)fc2GetNumOfCameras(context, &numOfCameras);
+	int error = fc2GetNumOfCameras(context, &numOfCameras);
 	char exBuffer[128];
 
 	if(error != FC2_ERROR_OK){
@@ -201,43 +224,128 @@ JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getNumOfC
 	return numOfCameras;
 }
 
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_connectToDefaultCamera(JNIEnv *env, jclass thisClass){
-	fc2PGRGuid guid;
-	jint error;
+JNIEXPORT jlong JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getSerialFromIndex(JNIEnv *env, jclass thisClass, jlong index){
+	int error;
+	char exBuffer[128];
+	unsigned int serialNumber;
 
-	 // Get the 0th camera
-    fc2GetCameraFromIndex(context, 0, &guid);
-    error = (jint)fc2Connect(context, &guid);
-	
-	return error;
+	error = fc2GetCameraSerialNumberFromIndex(context, (unsigned int)index, &serialNumber);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetCameraFromIndex returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return -1;
+	}
+
+	return (jlong)serialNumber;
 }
 
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_startCapture(JNIEnv *env, jclass thisClass){
-	jint error = (jint)fc2StartCapture(context);
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_connectToDefaultCamera(JNIEnv *env, jclass thisClass){
+	fc2PGRGuid guid;
+	int error;
+	char exBuffer[128];
+
+	 // Get the 0th camera
+    error = fc2GetCameraFromIndex(context, 0, &guid);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetCameraFromIndex returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+
+    error = fc2Connect(context, &guid);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2Connect returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+}
+
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_connectCameraWithSerial(JNIEnv *env, jclass thisClass, jlong serial){
+	fc2PGRGuid guid;
+	int error;
+	char exBuffer[128];
+
+	error = fc2GetCameraFromSerialNumber(context, (unsigned int)serial, &guid);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetCameraFromSerial returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+
+    error = fc2Connect(context, &guid);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2Connect returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+}
+
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_startCapture(JNIEnv *env, jclass thisClass){
+	int error;
+	char exBuffer[128];  
+	
+	error = fc2StartCapture(context);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2StartCapture returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
 	SetTimeStamping(TRUE); // this puts the timestamp in the first few pixels (upper left-hand corner) of the image
 
-	fc2CreateImage(&latestImage);
-	fc2CreateImage(&latestConvertedImage);
+	error = fc2CreateImage(&latestImage);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2CreateImage returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
-	return error;
+	error = fc2CreateImage(&latestConvertedImage);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2CreateImage returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 }
 
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_stopCapture(JNIEnv *env, jclass thisClass){
-	jint error;
-	fc2SetImageData(&latestConvertedImage, NULL, 0);
-	error = (jint)fc2StopCapture(context);
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_stopCapture(JNIEnv *env, jclass thisClass){
+	int error;
+	char exBuffer[128];
 
-	fc2SetImageData(&latestConvertedImage, C_convertedImagePData, C_convertedImageDataSize);
-	fc2DestroyImage(&latestImage); //This might cause an issue down the road, but probably not.
-	fc2DestroyImage(&latestConvertedImage);
+	error = fc2SetImageData(&latestConvertedImage, NULL, 0);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2SetImageData returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
-	return error;
-}
+	error = fc2StopCapture(context);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2StopCapture returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
-//This is just here for testing and lethargy.
-JNIEXPORT jbyteArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_test(JNIEnv *env, jclass thisClass){
-	return 0;
+	error = fc2SetImageData(&latestConvertedImage, C_convertedImagePData, C_convertedImageDataSize);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2SetImageData returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+
+	error = fc2DestroyImage(&latestImage); //This might cause an issue down the road, but probably not.
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2DestroyImage returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+
+	error = fc2DestroyImage(&latestConvertedImage);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2DestroyImage returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 }
 
 void printPropertyValues(fc2PropertyType propertyNo){
@@ -250,16 +358,22 @@ void printPropertyValues(fc2PropertyType propertyNo){
 			prop.type,	 prop.present,	prop.autoSupported,		prop.manualSupported,	prop.onOffSupported,  prop.onePushSupported,  prop.absValSupported,	  prop.readOutSupported,	prop.min,   prop.max,	 prop.absMin,	prop.absMax);
 }
 
-JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getPropertyInfo
-  (JNIEnv *env, jobject thisClass, jint propertyNo){
+JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getPropertyInfo(JNIEnv *env, jobject thisClass, jint propertyNo){
 	  jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGPropertyInfo;");
 	  jmethodID retConstructor = (*env)->GetMethodID(env, retClass, "<init>", "()V");
 	  jobject retJava = (*env)->NewObject(env, retClass, retConstructor);
 	  jfieldID currField;
 	  fc2PropertyInfo prop;
+	  int error;
+	  char exBuffer[128];
 
 	  prop.type = propertyNo;
-	  fc2GetPropertyInfo(context, &prop);
+	  error = fc2GetPropertyInfo(context, &prop);
+		if(error != FC2_ERROR_OK){
+			sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetPropertyInfo returned error", getError(error));
+			(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+			return NULL;
+		}
 
 	  currField = (*env)->GetFieldID(env, retClass, "present", "Z");
 	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.present);
@@ -287,16 +401,22 @@ JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getPro
 	return retJava;
 }
 
-JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getProperty
-  (JNIEnv *env, jobject thisClass, jint propertyNo){
+JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getProperty(JNIEnv *env, jobject thisClass, jint propertyNo){
 	  jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGProperty;");
 	  jmethodID retConstructor = (*env)->GetMethodID(env, retClass, "<init>", "()V");
 	  jobject retJava = (*env)->NewObject(env, retClass, retConstructor);
 	  jfieldID currField;
 	  fc2Property prop;
+	  int error;
+	  char exBuffer[128];
 
 	  prop.type = propertyNo;
-	  fc2GetProperty(context, &prop);
+	  error = fc2GetProperty(context, &prop);
+		if(error != FC2_ERROR_OK){
+			sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetProperty returned error", getError(error));
+			(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+			return NULL;
+		}
 
 	  currField = (*env)->GetFieldID(env, retClass, "present", "Z");
 	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.present);
@@ -345,11 +465,17 @@ void main(){
 
 
 
-JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImage
-  (JNIEnv *env, jclass thisClass, jbyteArray byteArray){
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImage(JNIEnv *env, jclass thisClass, jbyteArray byteArray){
 	jbyte* bufferPtr;
+	int error;
+	char exBuffer[128];
 
-	fc2RetrieveBuffer(context, &latestImage);
+	error = fc2RetrieveBuffer(context, &latestImage);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2RetrieveBuffer returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 	
 	// Here be smaller-than-usual dragons that breathe inefficient JNI code.
 	bufferPtr = (*env)->GetByteArrayElements(env, byteArray, NULL);
@@ -358,24 +484,46 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImag
 	C_convertedImagePData = latestConvertedImage.pData;
 	C_convertedImageDataSize = latestConvertedImage.dataSize;
 
-	fc2SetImageData(&latestConvertedImage, (unsigned char*)bufferPtr, (*env)->GetArrayLength(env, byteArray));
-	fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
+	error = fc2SetImageData(&latestConvertedImage, (unsigned char*)bufferPtr, (*env)->GetArrayLength(env, byteArray));
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2ImageData returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
+
+	error = fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2ConvertImageTo returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
 	//Restore latestConvertedImageData to its un-javafied state.
-	fc2SetImageData(&latestConvertedImage, NULL, 0);
+	error = fc2SetImageData(&latestConvertedImage, NULL, 0);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2SetImageData returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
 	//And give Java back its garbage so that it can collect it
 	(*env)->ReleaseByteArrayElements(env, byteArray, bufferPtr, 0); // a bit of cleanup
 	// end smaller-than-usual dragons that breathe inefficient JNI code.
 }
 
-JNIEXPORT jstring JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getCameraName
-	(JNIEnv *env, jclass thisClass){
+JNIEXPORT jstring JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getCameraName(JNIEnv *env, jclass thisClass){
 	char nameBuffer[256];
 	fc2CameraInfo camInfo;
 	jstring retJava;
+	int error;
+	char exBuffer[128];
 
-	fc2GetCameraInfo(context, &camInfo);
+	error = fc2GetCameraInfo(context, &camInfo);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetCameraInfo returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return NULL;
+	}
 
 	sprintf(nameBuffer, "%s - %u", camInfo.modelName, camInfo.serialNumber);
 
@@ -385,11 +533,12 @@ JNIEXPORT jstring JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getCam
 	return retJava;
 }
 
-JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_setProperty
-	(JNIEnv *env, jclass thisClass, jint propertyNo, jobject PGPropertyRef){
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_setProperty(JNIEnv *env, jclass thisClass, jint propertyNo, jobject PGPropertyRef){
 	  jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGProperty;");
 	  jfieldID currField;
 	  fc2Property prop;
+	  int error;
+	  char exBuffer[128];
 
 	  currField = (*env)->GetFieldID(env, retClass, "present", "Z");
 	  prop.present = (*env)->GetBooleanField(env, PGPropertyRef, currField);
@@ -409,5 +558,9 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_setProper
 	  prop.absValue = (*env)->GetFloatField(env, PGPropertyRef, currField);
 	  
 	  prop.type = propertyNo;
-	  fc2SetProperty(context, &prop);
+	  error = fc2SetProperty(context, &prop);
+	  if(error != FC2_ERROR_OK){
+		  sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2SetProperty returned error", getError(error));
+		  (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+	  }
 }

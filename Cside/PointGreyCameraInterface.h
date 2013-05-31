@@ -10,17 +10,17 @@ extern "C" {
 /*
  * Class:     com_pointgrey_api_PointGreyCameraInterface
  * Method:    createContext
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_createContext
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_createContext
   (JNIEnv *, jclass);
 
 /*
  * Class:     com_pointgrey_api_PointGreyCameraInterface
  * Method:    destroyContext
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_destroyContext
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_destroyContext
   (JNIEnv *, jclass);
 
 /*
@@ -33,26 +33,42 @@ JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getNumOfC
 
 /*
  * Class:     com_pointgrey_api_PointGreyCameraInterface
- * Method:    connectToDefaultCamera
- * Signature: ()I
+ * Method:    getSerialFromIndex
+ * Signature: (J)J
  */
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_connectToDefaultCamera
+JNIEXPORT jlong JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getSerialFromIndex
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_pointgrey_api_PointGreyCameraInterface
+ * Method:    connectToDefaultCamera
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_connectToDefaultCamera
   (JNIEnv *, jclass);
 
 /*
  * Class:     com_pointgrey_api_PointGreyCameraInterface
- * Method:    startCapture
- * Signature: ()I
+ * Method:    connectCameraWithSerial
+ * Signature: (J)V
  */
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_startCapture
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_connectCameraWithSerial
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_pointgrey_api_PointGreyCameraInterface
+ * Method:    startCapture
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_startCapture
   (JNIEnv *, jclass);
 
 /*
  * Class:     com_pointgrey_api_PointGreyCameraInterface
  * Method:    stopCapture
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_stopCapture
+JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_stopCapture
   (JNIEnv *, jclass);
 
 /*
