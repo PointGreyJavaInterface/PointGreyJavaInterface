@@ -454,8 +454,8 @@ void main(){
 	  //fc2SaveImage(&latestConvertedImage, "testfc2", FC2_PNG);
 	  //fc2RetrieveBuffer(context, &latestImage);
 
-	  for(i = (int)FC2_BRIGHTNESS; i <= (int)FC2_TEMPERATURE; i++)
-		printPropertyValues(i);
+	 // for(i = (int)FC2_BRIGHTNESS; i <= (int)FC2_TEMPERATURE; i++)
+	//	printPropertyValues(i);
 	  // Save it to PNG for comparison with the image output through java. should output to the project directory root
    //printf("Saving the last image to fc2outimage.png %d\n", fc2SaveImage(&latestConvertedImage, "fc2TestImage.png", FC2_PNG));
 	  //fc2SaveImage(&latestConvertedImage, "fc2mage.png", FC2_PNG);
@@ -469,8 +469,31 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImag
 	jbyte* bufferPtr;
 	int error;
 	char exBuffer[128];
+	unsigned char byte0, byte1, byte2, byte3;
+	unsigned int timestamp, seconds, cycle_count, cycle_offset;
+	double milliseconds;
+	double totalTime;
 
 	error = fc2RetrieveBuffer(context, &latestImage);
+
+	// to preserve timestamp through image conversion
+	byte0 = latestImage.pData[0];
+	byte1 = latestImage.pData[1];
+	byte2 = latestImage.pData[2];
+	byte3 = latestImage.pData[3];
+
+	timestamp = byte0 << 24 | byte1 << 16 | byte2 << 8 | byte3;
+
+	seconds = timestamp >> 25;
+	cycle_count = timestamp >> 12 & 0x1FFF;
+	cycle_offset = timestamp & 0xFFF;
+
+	milliseconds = ((double)cycle_count)/8000;
+	totalTime = (double)seconds + milliseconds;
+
+	printf("%f\n", totalTime);
+	//printf("seconds:%d cycle_count:%d cycle_offset:%d\n", seconds, cycle_count, cycle_offset);
+
 	if(error != FC2_ERROR_OK){
 		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2RetrieveBuffer returned error", getError(error));
 		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
@@ -491,12 +514,20 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImag
 		return;
 	}
 
+	//printf("after: %d %d %d %d\n", latestConvertedImage.pData[0], latestConvertedImage.pData[1], latestConvertedImage.pData[2], latestConvertedImage.pData[3]);
+
 	error = fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
 	if(error != FC2_ERROR_OK){
 		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2ConvertImageTo returned error", getError(error));
 		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
 		return;
 	}
+
+	// to preserve timestamp through image conversion
+	latestConvertedImage.pData[0] = byte0;
+	latestConvertedImage.pData[1] = byte1;
+	latestConvertedImage.pData[2] = byte2;
+	latestConvertedImage.pData[3] = byte3;
 
 	//Restore latestConvertedImageData to its un-javafied state.
 	error = fc2SetImageData(&latestConvertedImage, NULL, 0);
