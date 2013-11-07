@@ -1,0 +1,1 @@
+gcc -Wall -D_JNI_IMPLEMENTATION_ -Wl,--kill-at -I"C:\Program Files\Java\jdk1.7.0_40\include" -I"C:\Program Files\Java\jdk1.7.0_40\include\win32" -I"C:\Program Files\Point Grey Research\FlyCapture2\include\C" -shared FlyCapture2JNI_Interface.c -o FlyCapture2JNI_Interface.dll -L"C:\Program Files\Point Grey Research\FlyCapture2\lib\C" -l FlyCapture2_C_v100

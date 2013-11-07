@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS		
 #endif
 
-#include "C/FlyCapture2_C.h"
+#include <FlyCapture2_C.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -126,6 +126,7 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 	int error;
 	char exBuffer[128];
 
+	// may have a memory leak here
 	retSupported = (int*)malloc(sizeof(int)*supportedModes * supportedFramerates);
 
 	for(i = 0; i < supportedModes; i++){
@@ -137,6 +138,8 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 			if(error != FC2_ERROR_OK){
 				sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetVideoModeAndFrameRateInfo returned error", getError(error));
 				(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+				// fixed leak!
+				free(retSupported);
 				return NULL;
 			}
 
@@ -438,41 +441,14 @@ JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getPro
 	return retJava;
 }
 
-void main(){
-	  fc2PGRGuid guid;
-	  int i;
-	  printf("Create context %d \n", fc2CreateContext(&context));
-	  printf("Get camera from index %d \n", fc2GetCameraFromIndex(context, 0, &guid));
-      printf("connect %d \n", fc2Connect(context, &guid));
-	  //SetTimeStamping(TRUE);
-	  //printf("start capture %d \n",fc2StartCapture(context));
-	  //fc2CreateImage(&latestImage);
-	  //fc2CreateImage(&latestConvertedImage);
-
-	  //printf("Retrieve buffer %d\n", fc2RetrieveBuffer(context, &latestImage));
-	  //fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
-	  //fc2SaveImage(&latestConvertedImage, "testfc2", FC2_PNG);
-	  //fc2RetrieveBuffer(context, &latestImage);
-
-	 // for(i = (int)FC2_BRIGHTNESS; i <= (int)FC2_TEMPERATURE; i++)
-	//	printPropertyValues(i);
-	  // Save it to PNG for comparison with the image output through java. should output to the project directory root
-   //printf("Saving the last image to fc2outimage.png %d\n", fc2SaveImage(&latestConvertedImage, "fc2TestImage.png", FC2_PNG));
-	  //fc2SaveImage(&latestConvertedImage, "fc2mage.png", FC2_PNG);
-	  //fc2StopCapture(context);
-	  fc2DestroyContext(context);
-}
-
-
-
 JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImage(JNIEnv *env, jclass thisClass, jbyteArray byteArray){
 	jbyte* bufferPtr;
 	int error;
 	char exBuffer[128];
 	unsigned char byte0, byte1, byte2, byte3;
-	unsigned int timestamp, seconds, cycle_count, cycle_offset;
-	double milliseconds;
-	double totalTime;
+	//unsigned int timestamp, seconds, cycle_count, cycle_offset;
+	//double milliseconds;
+	//double totalTime;
 
 	error = fc2RetrieveBuffer(context, &latestImage);
 
@@ -482,16 +458,16 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImag
 	byte2 = latestImage.pData[2];
 	byte3 = latestImage.pData[3];
 
-	timestamp = byte0 << 24 | byte1 << 16 | byte2 << 8 | byte3;
+	//timestamp = byte0 << 24 | byte1 << 16 | byte2 << 8 | byte3;
 
-	seconds = timestamp >> 25;
-	cycle_count = timestamp >> 12 & 0x1FFF;
-	cycle_offset = timestamp & 0xFFF;
+	//seconds = timestamp >> 25;
+	//cycle_count = timestamp >> 12 & 0x1FFF;
+	//cycle_offset = timestamp & 0xFFF;
 
-	milliseconds = ((double)cycle_count)/8000;
-	totalTime = (double)seconds + milliseconds;
+	//milliseconds = ((double)cycle_count)/8000;
+	//totalTime = (double)seconds + milliseconds;
 
-	printf("%f\n", totalTime);
+	//printf("%f\n", totalTime);
 	//printf("seconds:%d cycle_count:%d cycle_offset:%d\n", seconds, cycle_count, cycle_offset);
 
 	if(error != FC2_ERROR_OK){
