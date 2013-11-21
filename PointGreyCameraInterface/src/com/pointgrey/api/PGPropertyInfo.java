@@ -1,7 +1,7 @@
 package com.pointgrey.api;
 
 /**
- *
+ * Contains all information about a camera property that we are able to grab
  * @author Matt
  */
 public class PGPropertyInfo {

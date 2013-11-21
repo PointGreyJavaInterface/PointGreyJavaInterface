@@ -1,7 +1,9 @@
 package com.pointgrey.api;
 
 /**
- *
+ * This class represents a feature on a Point Grey camera.
+ * It keeps track of the minimum and maximum values a feature can be set to 
+ * and prevents you from exceeding them
  * @author Matt
  */
 public class PGCameraFeatureControl {
@@ -37,7 +39,7 @@ public class PGCameraFeatureControl {
     
     public void write(float value) {
         if(minVal > value || value > maxVal)
-            throw new Error("You keep on using this value... I dont think the range on it is what you think the range on it is");
+            throw new Error("You keep on using this value... I do not think the range on it is what you think the range on it is");
         
         PGProperty prop = PointGreyCameraInterface.getProperty(type);
         prop.absControl = info.absValSupported;

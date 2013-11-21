@@ -1,7 +1,7 @@
 package com.pointgrey.api;
 
 /**
- *
+ * This enumeration represents the different camera properties that a Point Grey Camera may support
  * @author Matt
  */
 public enum PGPropertyType {

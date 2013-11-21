@@ -1,11 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.pointgrey.api;
 
 /**
- *
+ * This class keeps track of a PGFrameRateMode and a PGVideoMode
+ * This can be used to represent the capture mode of a camera 
+ * (How many FPS is it running at, what is the resolution of the images produced, etc,.)
  * @author Matt
  */
 public class PGCameraMode {

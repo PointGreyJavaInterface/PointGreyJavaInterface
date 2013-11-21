@@ -5,7 +5,8 @@
 package com.pointgrey.api;
 
 /**
- *
+ * This class is an enumeration of the video modes that we know Point Grey to support.
+ * There may exist more video modes which are not yet added here.
  * @author Matt
  */
     public enum PGVideoMode //23 video modes....

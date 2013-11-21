@@ -1,7 +1,7 @@
 package com.pointgrey.api;
 
 /**
- *
+ * This class is used to change a camera's property.
  * @author Matt
  */
 public class PGProperty {

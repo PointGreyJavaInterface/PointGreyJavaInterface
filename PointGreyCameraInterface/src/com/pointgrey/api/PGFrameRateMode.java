@@ -1,11 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.pointgrey.api;
 
 /**
- *
+ * This enumeration contains the framerate modes that we know Point Grey cameras to support.
+ * It may be necessary to add any missing modes.
  * @author Matt
  */
 public enum PGFrameRateMode {

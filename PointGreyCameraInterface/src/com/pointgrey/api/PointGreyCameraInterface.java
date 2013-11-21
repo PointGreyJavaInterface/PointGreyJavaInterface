@@ -10,7 +10,11 @@ import javax.imageio.ImageIO;
 
 public class PointGreyCameraInterface {
     static {
-        System.loadLibrary("flyCapture2JNI_Interface");
+        if(System.getProperty("sun.arch.data.model").equals("64")){
+            System.loadLibrary("flyCapture2JNI_Interface64");
+        } else {
+            System.loadLibrary("flyCapture2JNI_Interface");
+        }
     }
     
     public static synchronized native void createContext(); // must be called before everything else. inits the subsystem

@@ -1,4 +1,3 @@
-
 import com.pointgrey.api.PGCameraFeatureControl;
 import com.pointgrey.api.PGCameraMode;
 import com.pointgrey.api.PGProperty;
