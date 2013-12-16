@@ -36,7 +36,7 @@ public class PointGreyCameraInterface {
     private static synchronized native void setProperty(int PropertyType, PGProperty property);
     
     public static synchronized PGCameraMode[] getSupportedCameraModes(){
-        LinkedList<PGCameraMode> retList = new LinkedList();
+        LinkedList<PGCameraMode> retList = new LinkedList<>();
         int[] supportedModes = getSupportedModes();
 
         for(int i = 0; i < supportedModes.length; i+=2){

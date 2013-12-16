@@ -441,6 +441,34 @@ JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getPro
 	return retJava;
 }
 
+int main(){
+	fc2PGRGuid guid;
+	int i;
+	printf("Create context %d \n", fc2CreateContext(&context));
+	printf("Get camera from index %d \n", fc2GetCameraFromIndex(context, 0, &guid));
+	printf("connect %d \n", fc2Connect(context, &guid));
+	//SetTimeStamping(TRUE);
+	//printf("start capture %d \n",fc2StartCapture(context));
+	//fc2CreateImage(&latestImage);
+	//fc2CreateImage(&latestConvertedImage);
+
+	//printf("Retrieve buffer %d\n", fc2RetrieveBuffer(context, &latestImage));
+	//fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
+	//fc2SaveImage(&latestConvertedImage, "testfc2", FC2_PNG);
+	//fc2RetrieveBuffer(context, &latestImage);
+
+	// for(i = (int)FC2_BRIGHTNESS; i <= (int)FC2_TEMPERATURE; i++)
+	//  printPropertyValues(i);
+	// Save it to PNG for comparison with the image output through java. should output to the project directory root
+	//printf("Saving the last image to fc2outimage.png %d\n", fc2SaveImage(&latestConvertedImage, "fc2TestImage.png", FC2_PNG));
+	//fc2SaveImage(&latestConvertedImage, "fc2mage.png", FC2_PNG);
+	//fc2StopCapture(context);
+	fc2DestroyContext(context);
+	
+	return 0;
+}
+
+
 JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImage(JNIEnv *env, jclass thisClass, jbyteArray byteArray){
 	jbyte* bufferPtr;
 	int error;
