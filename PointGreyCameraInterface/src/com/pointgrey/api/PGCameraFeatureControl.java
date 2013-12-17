@@ -44,18 +44,17 @@ public class PGCameraFeatureControl {
         PGProperty prop = PointGreyCameraInterface.getProperty(type);
         prop.absControl = info.absValSupported;
         prop.absValue = value;
-        prop.autoManualMode = false;
         prop.valueA = (int)value;
         prop.valueB = (int)value;
         PointGreyCameraInterface.setProperty(prop);
     }
     
     public float getMaximum(){
-        return (int)Math.floor(maxVal);
+        return maxVal;
     }
     
     public float getMinimum(){
-        return (int)Math.ceil(minVal);
+        return minVal;
     }
     
     public float getCurrentValue(){
@@ -69,5 +68,36 @@ public class PGCameraFeatureControl {
     
     public boolean isFeaturePresent(){
         return info.present;
+    }
+    
+    public boolean isAbsConstrol() {return info.absValSupported;}
+    public boolean canOnePush() {return info.onePushSupported;}
+    
+    public boolean isOn() {
+        PGProperty prop = PointGreyCameraInterface.getProperty(type);
+        return prop.onOff;
+    }
+    
+    public boolean isAutoMode() {
+        PGProperty prop = PointGreyCameraInterface.getProperty(type);
+        return prop.autoManualMode;
+    }
+    
+    public void setOnOff(boolean isOn){
+        PGProperty prop = PointGreyCameraInterface.getProperty(type);
+        prop.onOff = isOn;
+        PointGreyCameraInterface.setProperty(prop);
+    }
+    
+    public void setOnePush(boolean onePush){
+        PGProperty prop = PointGreyCameraInterface.getProperty(type);
+        prop.onePush = onePush;
+        PointGreyCameraInterface.setProperty(prop);
+    }
+    
+    public void setAutoMode(boolean isAuto){
+        PGProperty prop = PointGreyCameraInterface.getProperty(type);
+        prop.autoManualMode = isAuto;
+        PointGreyCameraInterface.setProperty(prop);
     }
 }

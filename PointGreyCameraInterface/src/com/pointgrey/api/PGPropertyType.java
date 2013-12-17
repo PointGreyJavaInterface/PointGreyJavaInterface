@@ -5,22 +5,32 @@ package com.pointgrey.api;
  * @author Matt
  */
 public enum PGPropertyType {
-    FC2_BRIGHTNESS,
-    FC2_AUTO_EXPOSURE,
-    FC2_SHARPNESS,
-    FC2_WHITE_BALANCE,
-    FC2_HUE,
-    FC2_SATURATION,
-    FC2_GAMMA,
-    FC2_IRIS,
-    FC2_FOCUS,
-    FC2_ZOOM,
-    FC2_PAN,
-    FC2_TILT,
-    FC2_SHUTTER,
-    FC2_GAIN,
-    FC2_TRIGGER_MODE,
-    FC2_TRIGGER_DELAY,
-    FC2_FRAME_RATE,
-    FC2_TEMPERATURE;
+    FC2_BRIGHTNESS("Brightness"),
+    FC2_AUTO_EXPOSURE("Exposure"),
+    FC2_SHARPNESS("Sharpness"),
+    FC2_WHITE_BALANCE("White Balance"),
+    FC2_HUE("Hue"),
+    FC2_SATURATION("Saturation"),
+    FC2_GAMMA("Gamma"),
+    FC2_IRIS("Iris"),
+    FC2_FOCUS("Focus"),
+    FC2_ZOOM("Zoom"),
+    FC2_PAN("Pan"),
+    FC2_TILT("Tilt"),
+    FC2_SHUTTER("Shutter"),
+    FC2_GAIN("Gain"),
+    FC2_TRIGGER_MODE("Trigger Mode"), //You probably should not use this one.
+    FC2_TRIGGER_DELAY("Trigger Delay"), //Or this one
+    FC2_FRAME_RATE("Frame Rate"),
+    FC2_TEMPERATURE("Temperature");
+    
+    private final String name;
+    PGPropertyType(String name){
+        this.name = name;
+    }
+
+    @Override
+    public String toString(){
+        return name;
+    }
 }
