@@ -14,14 +14,14 @@ public enum PGFrameRateMode {
 	FC2_FRAMERATE_60(60), //60fps
 	FC2_FRAMERATE_120(120), //120fps
 	FC2_FRAMERATE_240(240); //240fps
-        
-        private final double frameRate;
-        
-        private PGFrameRateMode(double frameRate){
-            this.frameRate = frameRate;
-        }
-        
-        public double getFrameRate(){
-            return frameRate;
-        }
+
+	private final double frameRate;
+
+	private PGFrameRateMode(double frameRate){
+		this.frameRate = frameRate;
+	}
+
+	public double getFrameRate(){
+		return frameRate;
+	}
 }
