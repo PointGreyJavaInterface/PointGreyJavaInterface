@@ -4,8 +4,8 @@ import com.pointgrey.api.PGCameraMode;
 import com.pointgrey.api.PGPropertyInfo;
 import com.pointgrey.api.PGPropertyType;
 import static com.pointgrey.api.PointGreyCameraInterface.*;
-import com.pointgrey.util.Color;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -52,12 +52,9 @@ public class Example {
 			startCapture();
 
 			//Currently an image in 3 byte BGR format will always be returned by the camera. Therefore we need width * height * 3 bytes to store an image.
-			byte[] buff = new byte[mode.getVideoMode().getWidth() * mode.getVideoMode().getHeight() * 3];
-			storeImage(buff); //storeImage stores an image inside of the byte buffer passed to it.
 			BufferedImage img = new BufferedImage(mode.getVideoMode().getWidth(), mode.getVideoMode().getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-			for (int i = 0; i < buff.length; i += 3) {
-				img.setRGB((i / 3) % mode.getVideoMode().getWidth(), (i / 3) / mode.getVideoMode().getWidth(), Color.getIntColor(buff[i + 2], buff[i + 1], buff[i]));
-			}
+			byte[] outImageByteArrayReference = ((DataBufferByte)img.getRaster().getDataBuffer()).getData();
+			storeImage(outImageByteArrayReference); //storeImage stores an image inside of the byte buffer passed to it.
 
 			try {
 				ImageIO.write(img, "png", new File("" + mode.getVideoMode() + "" + mode.getFrameRateMode() + ".png"));
