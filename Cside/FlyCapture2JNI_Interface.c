@@ -9,10 +9,13 @@
 #include "PointGreyCameraInterface.h"
 
 fc2Context context;
+
+// these are declared here so that the camera can be stopped gracefully
 fc2Image latestImage;
 fc2Image latestConvertedImage;
-unsigned char * C_convertedImagePData;
+unsigned char* C_convertedImagePData;
 int C_convertedImageDataSize;
+
 int VideoModes[] = {FC2_VIDEOMODE_160x120YUV444, FC2_VIDEOMODE_320x240YUV422, FC2_VIDEOMODE_640x480YUV411, FC2_VIDEOMODE_640x480YUV422, FC2_VIDEOMODE_640x480RGB,
 					FC2_VIDEOMODE_640x480Y8, FC2_VIDEOMODE_640x480Y16, FC2_VIDEOMODE_800x600YUV422, FC2_VIDEOMODE_800x600RGB, FC2_VIDEOMODE_800x600Y8, FC2_VIDEOMODE_800x600Y16,
 					FC2_VIDEOMODE_1024x768YUV422, FC2_VIDEOMODE_1024x768RGB, FC2_VIDEOMODE_1024x768Y8, FC2_VIDEOMODE_1024x768Y16, FC2_VIDEOMODE_1280x960YUV422,
@@ -71,44 +74,6 @@ char* getError(int error){
 	case FC2_ERROR_FORCE_32BITS: output = "Force 32 bits";
 	}
 	return output;
-}
-
-void PrintBuildInfo() {
-    fc2Version version;
-    char versionStr[512];
-    char timeStamp[512];
-
-    fc2GetLibraryVersion( &version );
-
-    sprintf(versionStr, "FlyCapture2 library version: %d.%d.%d.%d\n", version.major, version.minor, version.type, version.build);
-
-    printf("%s", versionStr);
-
-    sprintf(timeStamp, "Application build date: %s %s\n\n", __DATE__, __TIME__);
-
-    printf("%s", timeStamp);
-}
-
-void PrintCameraInfo() {
-    fc2CameraInfo camInfo;
-    fc2GetCameraInfo(context, &camInfo);
-
-    printf(
-        "\n*** CAMERA INFORMATION ***\n"
-        "Serial number - %u\n"
-        "Camera model - %s\n"
-        "Camera vendor - %s\n"
-        "Sensor - %s\n"
-        "Resolution - %s\n"
-        "Firmware version - %s\n"
-        "Firmware build time - %s\n\n",
-        camInfo.serialNumber,
-        camInfo.modelName,
-        camInfo.vendorName,
-        camInfo.sensorInfo,
-        camInfo.sensorResolution,
-        camInfo.firmwareVersion,
-        camInfo.firmwareBuildTime);
 }
 
 JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getSupportedModes(JNIEnv *env, jobject thisClass){
@@ -351,160 +316,105 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_stopCaptu
 	}
 }
 
-void printPropertyValues(fc2PropertyType propertyNo){
-	fc2PropertyInfo prop;
-	prop.type = propertyNo;
-
-	fc2GetPropertyInfo(context, &prop);
-
-	printf("Property #%d: \n\tpresent(%d) \n\tautoSupported(%d) \n\tmanualSupported(%d) \n\tonOffSupported(%d) \n\tonePushSupported(%d) \n\tabsValSupported(%d) \n\treadOutSupported(%d) \n\tmin(%d) \n\tmax(%d) \n\tabsMin(%f) \n\tabsMax(%f) \n",
-			prop.type,	 prop.present,	prop.autoSupported,		prop.manualSupported,	prop.onOffSupported,  prop.onePushSupported,  prop.absValSupported,	  prop.readOutSupported,	prop.min,   prop.max,	 prop.absMin,	prop.absMax);
-}
-
 JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getPropertyInfo(JNIEnv *env, jobject thisClass, jint propertyNo){
-	  jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGPropertyInfo;");
-	  jmethodID retConstructor = (*env)->GetMethodID(env, retClass, "<init>", "()V");
-	  jobject retJava = (*env)->NewObject(env, retClass, retConstructor);
-	  jfieldID currField;
-	  fc2PropertyInfo prop;
-	  int error;
-	  char exBuffer[128];
+	jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGPropertyInfo;");
+	jmethodID retConstructor = (*env)->GetMethodID(env, retClass, "<init>", "()V");
+	jobject retJava = (*env)->NewObject(env, retClass, retConstructor);
+	jfieldID currField;
+	fc2PropertyInfo prop;
+	int error;
+	char exBuffer[128];
 
-	  prop.type = propertyNo;
-	  error = fc2GetPropertyInfo(context, &prop);
-		if(error != FC2_ERROR_OK){
-			sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetPropertyInfo returned error", getError(error));
-			(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
-			return NULL;
-		}
+	prop.type = propertyNo;
+	error = fc2GetPropertyInfo(context, &prop);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetPropertyInfo returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return NULL;
+	}
 
-	  currField = (*env)->GetFieldID(env, retClass, "present", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.present);
-	  currField = (*env)->GetFieldID(env, retClass, "autoSupported", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.autoSupported);
-	  currField = (*env)->GetFieldID(env, retClass, "manualSupported", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.manualSupported);
-	  currField = (*env)->GetFieldID(env, retClass, "onOffSupported", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onOffSupported);
-	  currField = (*env)->GetFieldID(env, retClass, "onePushSupported", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onePushSupported);
-	  currField = (*env)->GetFieldID(env, retClass, "absValSupported", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.absValSupported);
-	  currField = (*env)->GetFieldID(env, retClass, "readOutSupported", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.readOutSupported);
-	  currField = (*env)->GetFieldID(env, retClass, "min", "I");
-	  (*env)->SetIntField(env, retJava, currField, (jint)prop.min);
-	  currField = (*env)->GetFieldID(env, retClass, "max", "I");
-	  (*env)->SetIntField(env, retJava, currField, (jint)prop.max);
-	  currField = (*env)->GetFieldID(env, retClass, "absMin", "F");
-	  (*env)->SetFloatField(env, retJava, currField, (jfloat)prop.absMin);
-	  currField = (*env)->GetFieldID(env, retClass, "absMax", "F");
-	  (*env)->SetFloatField(env, retJava, currField, (jfloat)prop.absMax);
+	currField = (*env)->GetFieldID(env, retClass, "present", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.present);
+	currField = (*env)->GetFieldID(env, retClass, "autoSupported", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.autoSupported);
+	currField = (*env)->GetFieldID(env, retClass, "manualSupported", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.manualSupported);
+	currField = (*env)->GetFieldID(env, retClass, "onOffSupported", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onOffSupported);
+	currField = (*env)->GetFieldID(env, retClass, "onePushSupported", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onePushSupported);
+	currField = (*env)->GetFieldID(env, retClass, "absValSupported", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.absValSupported);
+	currField = (*env)->GetFieldID(env, retClass, "readOutSupported", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.readOutSupported);
+	currField = (*env)->GetFieldID(env, retClass, "min", "I");
+	(*env)->SetIntField(env, retJava, currField, (jint)prop.min);
+	currField = (*env)->GetFieldID(env, retClass, "max", "I");
+	(*env)->SetIntField(env, retJava, currField, (jint)prop.max);
+	currField = (*env)->GetFieldID(env, retClass, "absMin", "F");
+	(*env)->SetFloatField(env, retJava, currField, (jfloat)prop.absMin);
+	currField = (*env)->GetFieldID(env, retClass, "absMax", "F");
+	(*env)->SetFloatField(env, retJava, currField, (jfloat)prop.absMax);
 
 	return retJava;
 }
 
 JNIEXPORT jobject JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getProperty(JNIEnv *env, jobject thisClass, jint propertyNo){
-	  jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGProperty;");
-	  jmethodID retConstructor = (*env)->GetMethodID(env, retClass, "<init>", "()V");
-	  jobject retJava = (*env)->NewObject(env, retClass, retConstructor);
-	  jfieldID currField;
-	  fc2Property prop;
-	  int error;
-	  char exBuffer[128];
+	jclass retClass = (*env)->FindClass(env, "Lcom/pointgrey/api/PGProperty;");
+	jmethodID retConstructor = (*env)->GetMethodID(env, retClass, "<init>", "()V");
+	jobject retJava = (*env)->NewObject(env, retClass, retConstructor);
+	jfieldID currField;
+	fc2Property prop;
+	int error;
+	char exBuffer[128];
 
-	  prop.type = propertyNo;
-	  error = fc2GetProperty(context, &prop);
-		if(error != FC2_ERROR_OK){
-			sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetProperty returned error", getError(error));
-			(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
-			return NULL;
-		}
+	prop.type = propertyNo;
+	error = fc2GetProperty(context, &prop);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetProperty returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return NULL;
+	}
 
-	  currField = (*env)->GetFieldID(env, retClass, "present", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.present);
-	  currField = (*env)->GetFieldID(env, retClass, "absControl", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, prop.absControl);
-	  currField = (*env)->GetFieldID(env, retClass, "onePush", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onePush);
-	  currField = (*env)->GetFieldID(env, retClass, "onOff", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onOff);
-	  currField = (*env)->GetFieldID(env, retClass, "autoManualMode", "Z");
-	  (*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.autoManualMode);
-	  currField = (*env)->GetFieldID(env, retClass, "valueA", "I");
-	  (*env)->SetIntField(env, retJava, currField, (jint)prop.valueA);
-	  currField = (*env)->GetFieldID(env, retClass, "valueB", "I");
-	  (*env)->SetIntField(env, retJava, currField, (jint)prop.valueB);
-	  currField = (*env)->GetFieldID(env, retClass, "absValue", "F");
-	  (*env)->SetFloatField(env, retJava, currField, (jfloat)prop.absValue);
+	currField = (*env)->GetFieldID(env, retClass, "present", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.present);
+	currField = (*env)->GetFieldID(env, retClass, "absControl", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, prop.absControl);
+	currField = (*env)->GetFieldID(env, retClass, "onePush", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onePush);
+	currField = (*env)->GetFieldID(env, retClass, "onOff", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.onOff);
+	currField = (*env)->GetFieldID(env, retClass, "autoManualMode", "Z");
+	(*env)->SetBooleanField(env, retJava, currField, (jboolean)prop.autoManualMode);
+	currField = (*env)->GetFieldID(env, retClass, "valueA", "I");
+	(*env)->SetIntField(env, retJava, currField, (jint)prop.valueA);
+	currField = (*env)->GetFieldID(env, retClass, "valueB", "I");
+	(*env)->SetIntField(env, retJava, currField, (jint)prop.valueB);
+	currField = (*env)->GetFieldID(env, retClass, "absValue", "F");
+	(*env)->SetFloatField(env, retJava, currField, (jfloat)prop.absValue);
 
 	return retJava;
 }
-
-int main(){
-	fc2PGRGuid guid;
-	int i;
-	printf("Create context %d \n", fc2CreateContext(&context));
-	printf("Get camera from index %d \n", fc2GetCameraFromIndex(context, 0, &guid));
-	printf("connect %d \n", fc2Connect(context, &guid));
-	//SetTimeStamping(TRUE);
-	//printf("start capture %d \n",fc2StartCapture(context));
-	//fc2CreateImage(&latestImage);
-	//fc2CreateImage(&latestConvertedImage);
-
-	//printf("Retrieve buffer %d\n", fc2RetrieveBuffer(context, &latestImage));
-	//fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
-	//fc2SaveImage(&latestConvertedImage, "testfc2", FC2_PNG);
-	//fc2RetrieveBuffer(context, &latestImage);
-
-	// for(i = (int)FC2_BRIGHTNESS; i <= (int)FC2_TEMPERATURE; i++)
-	//  printPropertyValues(i);
-	// Save it to PNG for comparison with the image output through java. should output to the project directory root
-	//printf("Saving the last image to fc2outimage.png %d\n", fc2SaveImage(&latestConvertedImage, "fc2TestImage.png", FC2_PNG));
-	//fc2SaveImage(&latestConvertedImage, "fc2mage.png", FC2_PNG);
-	//fc2StopCapture(context);
-	fc2DestroyContext(context);
-	
-	return 0;
-}
-
 
 JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImage(JNIEnv *env, jclass thisClass, jbyteArray byteArray){
 	jbyte* bufferPtr;
 	int error;
 	char exBuffer[128];
 	unsigned char byte0, byte1, byte2, byte3;
-	//unsigned int timestamp, seconds, cycle_count, cycle_offset;
-	//double milliseconds;
-	//double totalTime;
 
 	error = fc2RetrieveBuffer(context, &latestImage);
+	if(error != FC2_ERROR_OK){
+		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2RetrieveBuffer returned error", getError(error));
+		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
+		return;
+	}
 
 	// to preserve timestamp through image conversion
 	byte0 = latestImage.pData[0];
 	byte1 = latestImage.pData[1];
 	byte2 = latestImage.pData[2];
 	byte3 = latestImage.pData[3];
-
-	//timestamp = byte0 << 24 | byte1 << 16 | byte2 << 8 | byte3;
-
-	//seconds = timestamp >> 25;
-	//cycle_count = timestamp >> 12 & 0x1FFF;
-	//cycle_offset = timestamp & 0xFFF;
-
-	//milliseconds = ((double)cycle_count)/8000;
-	//totalTime = (double)seconds + milliseconds;
-
-	//printf("%f\n", totalTime);
-	//printf("seconds:%d cycle_count:%d cycle_offset:%d\n", seconds, cycle_count, cycle_offset);
-
-	if(error != FC2_ERROR_OK){
-		sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2RetrieveBuffer returned error", getError(error));
-		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
-		return;
-	}
 	
-	// Here be smaller-than-usual dragons that breathe inefficient JNI code.
 	bufferPtr = (*env)->GetByteArrayElements(env, byteArray, NULL);
 
 	//Save a reference to the old pData and size before switching to Java's (Java don't take too kindly to freeing up its memory when you don't possess it)
@@ -517,8 +427,6 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImag
 		(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
 		return;
 	}
-
-	//printf("after: %d %d %d %d\n", latestConvertedImage.pData[0], latestConvertedImage.pData[1], latestConvertedImage.pData[2], latestConvertedImage.pData[3]);
 
 	error = fc2ConvertImageTo(FC2_PIXEL_FORMAT_BGR, &latestImage, &latestConvertedImage);
 	if(error != FC2_ERROR_OK){
@@ -543,7 +451,6 @@ JNIEXPORT void JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_storeImag
 
 	//And give Java back its garbage so that it can collect it
 	(*env)->ReleaseByteArrayElements(env, byteArray, bufferPtr, 0); // a bit of cleanup
-	// end smaller-than-usual dragons that breathe inefficient JNI code.
 }
 
 JNIEXPORT jstring JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getCameraName(JNIEnv *env, jclass thisClass){
@@ -562,7 +469,6 @@ JNIEXPORT jstring JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getCam
 
 	sprintf(nameBuffer, "%s - %u", camInfo.modelName, camInfo.serialNumber);
 
-	//retJava = (*env)->NewString(env, (jchar*)nameBuffer, (jsize)strlen(nameBuffer));
 	retJava = (*env)->NewStringUTF(env, nameBuffer);
 
 	return retJava;
