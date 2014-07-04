@@ -14,15 +14,15 @@ public class Example {
 
 	public static void main(String[] args) {
 		System.out.println("Creating a context for the camera.");
-		createContext();
+		createPGContext();
 
-		System.out.println("\nThere are " + getNumOfCameras() + " camera(s) connected to the system");
+		System.out.println("\nThere are " + getNumCameras() + " camera(s) connected to the system");
 		System.out.println("Connecting to the default camera.");
-		connectToDefaultCamera();
-		System.out.println("Connected to: " + getCameraName());
+		connectCamera();
+		System.out.println("Connected to: " + getConnectedCameraName());
 
 		System.out.println("\nStarting capture.");
-		startCapture();
+		startCapturing();
 
 		//Check each property type that may be available.
 		System.out.println("\nListing available properties.");
@@ -49,12 +49,12 @@ public class Example {
 
 			//Changing the camera mode will cause the camera to stop capturing, it must be started again.
 			setCameraMode(mode);
-			startCapture();
+			startCapturing();
 
 			//Currently an image in 3 byte BGR format will always be returned by the camera. Therefore we need width * height * 3 bytes to store an image.
 			BufferedImage img = new BufferedImage(mode.getVideoMode().getWidth(), mode.getVideoMode().getHeight(), BufferedImage.TYPE_3BYTE_BGR);
 			byte[] outImageByteArrayReference = ((DataBufferByte)img.getRaster().getDataBuffer()).getData();
-			storeImage(outImageByteArrayReference); //storeImage stores an image inside of the byte buffer passed to it.
+			storeImageInBuffer(outImageByteArrayReference); //storeImage stores an image inside of the byte buffer passed to it.
 
 			try {
 				ImageIO.write(img, "png", new File("" + mode.getVideoMode() + "" + mode.getFrameRateMode() + ".png"));
@@ -69,9 +69,9 @@ public class Example {
 		}
 
 		System.out.println("\nStopping capture.");
-		stopCapture();
+		stopCapturing();
 		System.out.println("Destroying camera context.");
-		destroyContext();
+		destroyPGContext();
 
 		System.out.println("\nFinished! " + imageCount + " images were saved!");
 	}
