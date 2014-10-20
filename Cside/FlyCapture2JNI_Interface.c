@@ -91,7 +91,6 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 	int error;
 	char exBuffer[128];
 
-	// may have a memory leak here
 	retSupported = (int*)malloc(sizeof(int)*supportedModes * supportedFramerates);
 
 	for(i = 0; i < supportedModes; i++){
@@ -103,7 +102,6 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 			if(error != FC2_ERROR_OK){
 				sprintf(exBuffer, "JNI Exception in PointGrey Interface: %s \"%s\"", "fc2GetVideoModeAndFrameRateInfo returned error", getError(error));
 				(*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), exBuffer);
-				// fixed leak!
 				free(retSupported);
 				return NULL;
 			}
@@ -112,14 +110,13 @@ JNIEXPORT jintArray JNICALL Java_com_pointgrey_api_PointGreyCameraInterface_getS
 				retSupported[retSupportedIndex] = i;
 				retSupported[retSupportedIndex + 1] = j;
 				retSupportedIndex += 2;
-				//printf("Mode %d Framerate %d (i = %d, j = %d) is supported!!\n", testMode, testFramerate, i, j);
 			}
 		}
 	}
 
-	retJava = (*env)->NewIntArray(env, retSupportedIndex); // works even though visual studio 2012 underlines as red
+	retJava = (*env)->NewIntArray(env, retSupportedIndex);
 
-	bufferPtr = (*env)->GetIntArrayElements(env, retJava, NULL); // works even though visual studio 2012 underlines as red
+	bufferPtr = (*env)->GetIntArrayElements(env, retJava, NULL);
 
 	for(i = 0; i < retSupportedIndex; i++){ // this is horribly inefficient...must find a better way
 		bufferPtr[i] = retSupported[i];
